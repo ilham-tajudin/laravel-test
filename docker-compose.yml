@@ -1,0 +1,52 @@
+version: "3.7"
+
+services:
+  nginx:
+    image: nginx:1.17.4-alpine
+    ports:
+      - "9999:80"
+    restart: always
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+      - postgres
+    networks:
+      - laravel
+
+  postgres:
+    image: postgres:12.0-alpine
+    restart: always
+    volumes:
+      - test_laravel:/var/lib/postgresql/data
+      - ./docker/db/sql:/docker-entrypoint-initdb.d
+    ports:
+      - 5433:5432
+    environment:
+      TZ: "Asia/Jakarta"
+      POSTGRES_USER: "test"
+      POSTGRES_PASSWORD: "test"
+      POSTGRES_DB: "test"
+    networks:
+      - laravel
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - 9000:9000
+    networks:
+      - laravel
+
+networks:
+  laravel:
+
+volumes:
+  test_laravel:
